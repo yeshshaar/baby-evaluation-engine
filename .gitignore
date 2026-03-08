@@ -16,4 +16,5 @@ data/processed/
 # 4. Mac System Files
 .DS_Store
 
-.streamlit/
+.streamlit/.streamlit/secrets.toml
+data/sessions/

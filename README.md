@@ -1,3 +1,5 @@
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_svg.svg)](https://yield-ai.streamlit.app)
+
 # Yield.ai(B.A.B.Y. (Biometric & Ability Based Yield-engine))
 ### *A Privacy-First AI Evaluation Engine for Automated Resume Ranking*
 
