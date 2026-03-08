@@ -34,6 +34,16 @@ output_csv = os.path.join(processed_dir, "evaluation_report.csv")
 os.makedirs(raw_dir, exist_ok=True)
 os.makedirs(processed_dir, exist_ok=True)
 
+# --- SIDEBAR CLEAR BUTTON ---
+st.sidebar.markdown("---")
+if st.sidebar.button("🗑️ Clear Evaluation History", type="secondary"):
+    if os.path.exists("data/yield_engine.db"):
+        os.remove("data/yield_engine.db")
+        init_db() # Recreate the clean table
+        st.sidebar.success("History Cleared!")
+        time.sleep(1)
+        st.rerun()
+        
 # --- 2. SIDEBAR DEBUGGER ---
 st.sidebar.title("🛠️ System Status")
 if "GROQ_API_KEY" in st.secrets:
