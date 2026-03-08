@@ -37,10 +37,15 @@ with col1:
                 os.makedirs(raw_dir, exist_ok=True)
                 os.makedirs(processed_dir, exist_ok=True)
                 
-                # Step A: Clean out the old resumes
-                for file in os.listdir(raw_dir):
-                    if file.lower().endswith(".pdf"):
-                        os.remove(os.path.join(raw_dir, file))
+                # Step A: Clean out the old resumes safely
+                if os.path.exists(raw_dir):
+                    for file in os.listdir(raw_dir):
+                        file_path = os.path.join(raw_dir, file)
+                        try:
+                            if os.path.isfile(file_path):
+                                os.remove(file_path)
+                        except Exception as e:
+                            print(f"Skipping deletion of {file}: {e}")
                         
                 # Step B: Clean out the old CSV
                 output_csv = os.path.join(processed_dir, "evaluation_report.csv")
