@@ -13,7 +13,7 @@ from src.main import process_resumes_to_csv
 # 1. Configure the page settings
 st.set_page_config(page_title="B.A.B.Y. Dashboard", page_icon="👶", layout="wide")
 
-st.title("👶 B.A.B.Y.: AI Resume Evaluation Engine")
+st.title("Yield.ai : AI Resume Evaluation Engine")
 st.subheader("Biometric & Ability Based Yield-engine")
 st.markdown("**Designed for Recruiters:** Upload candidate resumes and a Job Description to instantly rank applicants using Llama 3.1 and Vector Embeddings.")
 st.divider()
@@ -36,6 +36,9 @@ with col1:
                 
                 # Step A: Clean out the old resumes from data/raw/
                 raw_dir = "data/raw/"
+                processed_dir = "data/processed/"
+                os.makedirs(raw_dir, exist_ok=True)
+                os.makedirs(processed_dir, exist_ok=True)
                 for file in os.listdir(raw_dir):
                     if file.endswith(".pdf"):
                         os.remove(os.path.join(raw_dir, file))
