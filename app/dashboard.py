@@ -12,7 +12,12 @@ from src.main import process_resumes_to_csv
 
 # Configure the page settings
 st.set_page_config(page_title="Yield.ai Dashboard", page_icon="🤖", layout="wide")
-
+# --- TEMP DEBUGGER ---
+if "GROQ_API_KEY" in st.secrets:
+    st.sidebar.success("✅ Cloud Secret: Detected")
+else:
+    st.sidebar.error("🚨 Cloud Secret: MISSING")
+# ----------------------
 st.title("🤖 Yield.ai: AI Resume Evaluation Engine")
 st.markdown("**Designed for Recruiters:** Upload candidate resumes and a Job Description to instantly rank applicants using Llama 3.1 and Vector Embeddings.")
 st.divider()
