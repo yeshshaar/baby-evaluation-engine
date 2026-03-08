@@ -32,13 +32,20 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_skills):
                 
             # 3. Calculate the match score
             candidate_skills = parsed_data.get("core_skills", []) + parsed_data.get("tools", [])
-            match_score = calculate_skill_match(candidate_skills, jd_skills)
+           # 3. Calculate the match score and get the AI explanation
+            candidate_skills = parsed_data.get("core_skills", []) + parsed_data.get("tools", [])
+            
+            # Catch all 4 outputs from the updated scorer!
+            match_score, matched, missing, improvement = calculate_skill_match(candidate_skills, jd_skills)
             
             # 4. Compile the final record
             record = {
                 "Candidate Name": parsed_data.get("name", "Unknown"),
-                "Years of Experience": parsed_data.get("years_of_experience", 0),
                 "Match Score (%)": match_score,
+                "Matched Skills": ", ".join(matched),
+                "Missing Skills": ", ".join(missing),
+                "How to Improve": improvement,
+                "Years of Experience": parsed_data.get("years_of_experience", 0),
                 "Core Skills": ", ".join(parsed_data.get("core_skills", [])),
                 "Tools": ", ".join(parsed_data.get("tools", [])),
                 "Projects": ", ".join(parsed_data.get("projects", []))

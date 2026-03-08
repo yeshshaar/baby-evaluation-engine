@@ -1,44 +1,45 @@
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
-def calculate_skill_match(resume_skills, jd_skills):
-    """Converts skills to vectors and calculates semantic similarity."""
-    print("Loading embedding model (this might take a few seconds the first time)...")
-    
-    # 'all-MiniLM-L6-v2' is a lightweight, incredibly fast industry-standard model for this
-    model = SentenceTransformer('all-MiniLM-L6-v2')
+# Load the model outside the function so it doesn't reload for every single skill
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    # Convert the lists of skills into single strings of text
-    resume_text = " ".join(resume_skills)
+def calculate_skill_match(candidate_skills, jd_skills):
+    """Calculates score and identifies matched/missing skills using semantic vectors."""
+    if not candidate_skills or not jd_skills:
+        return 0, [], jd_skills, "Missing data for evaluation."
+
+    # 1. Overall Score Calculation
+    resume_text = " ".join(candidate_skills)
     jd_text = " ".join(jd_skills)
-
-    # The ML Magic: Convert the text into mathematical vectors (lists of numbers)
+    
     resume_vector = model.encode([resume_text])
     jd_vector = model.encode([jd_text])
-
-    # Calculate the angle (cosine similarity) between the two vectors
-    similarity = cosine_similarity(resume_vector, jd_vector)[0][0]
-
-    # Convert the raw decimal score into a clean percentage
-    match_percentage = round(similarity * 100, 2)
-    return match_percentage
-
-# --- Testing the Scoring Engine ---
-if __name__ == "__main__":
-    # Let's pretend this is a Job Description for an MLE role
-    jd_skills = ["Python", "Machine Learning", "NLP", "AWS", "Docker", "Vector Databases"]
     
-    # These are the exact skills your AI parser just pulled from your resume!
-    candidate_skills = [
-        "Python", "Java", "C++", "Scikit-Learn", "TensorFlow", "CNNs", 
-        "Model Evaluation", "Semantic Matching", "Skill Extraction", 
-        "Explainable AI", "LLaMA", "Prompt Engineering"
-    ]
+    match_score = round(cosine_similarity(resume_vector, jd_vector)[0][0] * 100, 2)
 
-    print(f"Target JD Skills: {jd_skills}\n")
-    print(f"Candidate Skills: {candidate_skills}\n")
+    # 2. Explainable AI: Identify Matched vs. Missing Skills
+    matched_skills = []
+    missing_skills = []
     
-    score = calculate_skill_match(candidate_skills, jd_skills)
+    # Convert all candidate skills to vectors at once
+    candidate_vectors = model.encode(candidate_skills)
     
-    print(f"--- CANDIDATE MATCH SCORE: {score}% ---")
+    for jd_skill in jd_skills:
+        jd_vec = model.encode([jd_skill])
+        # Compare this one JD skill against ALL candidate skills
+        similarities = cosine_similarity(jd_vec, candidate_vectors)[0]
+        
+        # If the highest similarity is above 0.4 (40%), we consider it a semantic match!
+        if max(similarities) > 0.4: 
+            matched_skills.append(jd_skill)
+        else:
+            missing_skills.append(jd_skill)
+
+    # 3. Generate "How to Improve" Feedback
+    if missing_skills:
+        improvement = f"Focus on adding projects or experience related to: {', '.join(missing_skills)}"
+    else:
+        improvement = "Candidate is a highly aligned match for this role!"
+
+    return match_score, matched_skills, missing_skills, improvement
