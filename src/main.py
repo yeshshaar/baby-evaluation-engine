@@ -17,6 +17,8 @@ def check_api():
     return True
 
 def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw, progress_callback=None):
+
+
     print(f"--- 🚀 YIELD.AI PIPELINE START ---")
     
     if not check_api():
