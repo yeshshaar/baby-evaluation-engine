@@ -16,7 +16,7 @@ def check_api():
         return False
     return True
 
-def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
+def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw, progress_callback=None):
     print(f"--- 🚀 YIELD.AI PIPELINE START ---")
     
     if not check_api():
@@ -29,13 +29,17 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
         return
         
     files = [f for f in os.listdir(abs_resume_path) if f.lower().endswith(".pdf")]
-    print(f"✅ LOG: Found {len(files)} files: {files}")
+    total_files = len(files)
+    print(f"✅ LOG: Found {total_files} files: {files}")
 
     if not files:
         print("🚨 LOG ERROR: No PDF files to process.")
         return
 
-    # 1. Parse JD
+    # 1. Parse JD (Initial Progress Update)
+    if progress_callback:
+        progress_callback(0, total_files, "Extracting Job Description Skills...")
+        
     try:
         jd_skills = parse_jd_with_llama(jd_text_raw)
         print(f"✅ LOG: JD Extracted: {jd_skills}")
@@ -47,7 +51,11 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
     results = []
     
     # 2. Process Files
-    for filename in files:
+    for i, filename in enumerate(files):
+        # --- UI CALLBACK: Update bar and text ---
+        if progress_callback:
+            progress_callback(i, total_files, filename)
+            
         pdf_path = os.path.join(abs_resume_path, filename)
         print(f"🔍 Analyzing: {filename}...")
         
@@ -76,7 +84,7 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
                 return str(val) if val else "None"
             
             results.append({
-                "Candidate Name": parsed_data.get("name", "Unknown Candidate"),
+                "Candidate Name": parsed_data.get("name", filename.replace(".pdf", "")),
                 "Match Score (%)": int(match_score),
                 "Matched Skills": list_to_str(matched),
                 "Missing Skills": list_to_str(missing),
@@ -87,18 +95,18 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
                 "Projects": list_to_str(projects)
             })
             print(f"✅ Successfully processed {filename}")
-            time.sleep(1) 
+            
+            # Pause to respect Groq Rate Limits
+            time.sleep(1.5) 
             
         except Exception as e:
             print(f"🚨 LOG ERROR: Failed on {filename}: {e}")
 
-    # 3. Final CSV Save
-    # 3. Final Database Save
+    # 3. Final Database and CSV Save
     if results:
         save_evaluation(results)
         print(f"🏆 SUCCESS: Saved {len(results)} results to the Database.")
         
-        # We still save a 'latest' CSV for the download button
         df = pd.DataFrame(results)
         df.to_csv(output_csv_path, index=False)
     else:

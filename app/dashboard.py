@@ -35,14 +35,20 @@ os.makedirs(raw_dir, exist_ok=True)
 os.makedirs(processed_dir, exist_ok=True)
 
 # --- SIDEBAR CLEAR BUTTON ---
-st.sidebar.markdown("---")
-if st.sidebar.button("🗑️ Clear Evaluation History", type="secondary"):
+if st.sidebar.button("🗑️ Clear Everything", type="secondary"):
+    # 1. Clear the Database
     if os.path.exists("data/yield_engine.db"):
         os.remove("data/yield_engine.db")
-        init_db() # Recreate the clean table
-        st.sidebar.success("History Cleared!")
-        time.sleep(1)
-        st.rerun()
+        init_db()
+    
+    # 2. Clear the Physical PDF Files (The "21 resumes" fix)
+    for f in os.listdir(raw_dir):
+        if f.endswith(".pdf"):
+            os.remove(os.path.join(raw_dir, f))
+            
+    st.sidebar.success("Database and Files Cleared!")
+    time.sleep(1)
+    st.rerun()
 
 # --- 2. SIDEBAR DEBUGGER ---
 st.sidebar.title("🛠️ System Status")
@@ -73,48 +79,48 @@ with col2:
 # Run Pipeline Button
 # --- RUN PIPELINE BUTTON WITH PROGRESS BAR ---
 if st.button("🚀 Run AI Evaluation", type="primary", use_container_width=True):
-    # Check if there are any PDFs in the raw folder (from Kaggle script or Uploads)
+    # Check for files
     existing_files = [f for f in os.listdir(raw_dir) if f.endswith(".pdf")]
     
     if not uploaded_files and not existing_files:
         st.warning("⚠️ No resumes found. Upload PDFs or run your Kaggle script first!")
     elif not jd_text:
-        st.warning("⚠️ Please paste a Job Description to compare against.")
+        st.warning("⚠️ Please paste a Job Description.")
     else:
-        # 1. Save any newly uploaded files to the raw folder first
+        # Save uploads if any
         if uploaded_files:
             for uploaded_file in uploaded_files:
                 with open(os.path.join(raw_dir, uploaded_file.name), "wb") as f:
                     f.write(uploaded_file.getbuffer())
         
-        # 2. Get the final list of files to process
+        # Fresh file count for the UI
         files_to_process = [f for f in os.listdir(raw_dir) if f.endswith(".pdf")]
         total_files = len(files_to_process)
         
-        # 3. Create UI Placeholders for the Progress Bar
+        # PROGRESS UI ELEMENTS
         progress_bar = st.progress(0)
         status_text = st.empty() 
 
-        with st.spinner("Pipeline active..."):
-            # We show a simulated progress update as the engine runs
-            # Note: The engine runs as one big batch, so we update the bar 
-            # to show the user the engine has started.
-            for i in range(100):
-                time.sleep(0.01) # Rapidly fill the bar to 10% to show start
-                if i < 10:
-                    progress_bar.progress(i + 1)
-            
-            status_text.text(f"⏳ Processing {total_files} resumes via Groq (Llama 3.1)...")
-            
-            # --- EXECUTE THE ACTUAL PIPELINE ---
-            process_resumes_to_csv(raw_dir, output_csv, jd_text)
-            
-            # 4. Finalize UI
-            progress_bar.progress(100)
-            status_text.success(f"✅ Finished! {total_files} resumes analyzed and saved to Database.")
-            time.sleep(1)
-            st.rerun()
+        # The Callback Function
+        def update_ui_callback(current_index, total, filename):
+            percent = int(((current_index + 1) / total) * 100)
+            progress_bar.progress(percent)
+            status_text.text(f"🧪 Analyzing ({current_index + 1}/{total}): {filename}...")
 
+        # EXECUTION
+        with st.spinner("Pipeline active..."):
+            process_resumes_to_csv(
+                raw_dir, 
+                output_csv, 
+                jd_text, 
+                progress_callback=update_ui_callback
+            )
+            
+        status_text.success(f"✅ Success! {total_files} resumes analyzed.")
+        time.sleep(1)
+        st.rerun()
+
+        
 # --- 4. TABS FOR RESULTS & OPTIMIZATION ---
 tab1, tab2 = st.tabs(["🏆 Leaderboard", "✨ AI Resume Optimizer"])
 
