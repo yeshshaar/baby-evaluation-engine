@@ -19,6 +19,26 @@
 ## 🏗️ **System Architecture**
 The system is designed with a decoupled architecture, separating the core AI logic from the UI layer to allow for future scalability.
 
+
+
+### **Tech Stack**
+* **LLM Orchestration:** Groq API (Llama 3.1)
+* **Backend:** Python 3.10+
+* **UI Framework:** Streamlit
+* **Database:** SQLite (for historical persistence)
+* **Data Science:** Pandas, Plotly (for analytics)
+* **Security:** UUID Session Management & Streamlit Secrets
+
+---
+
+## 🛡️ **Data Governance & Privacy**
+As a project handling PII (Personally Identifiable Information), B.A.B.Y. implements:
+1.  **Session Isolation:** Every visitor is assigned a unique UUID. PDFs and analysis results are stored in temporary, isolated directories.
+2.  **Admin Access Layer:** Historical data is protected via an authentication layer, preventing unauthorized access to candidate history.
+3.  **Sanitized Extraction:** The engine is built to focus on skills and tools, reducing bias by ignoring non-relevant personal identifiers.
+
+---
+
 ## 🛠️ **Installation & Setup**
 
 1. **Clone the repository:**
@@ -39,24 +59,4 @@ The system is designed with a decoupled architecture, separating the core AI log
 
 4. **Run the Dashboard:**
     streamlit run app/dashboard.py
-
-
-
-### **Tech Stack**
-* **LLM Orchestration:** Groq API (Llama 3.1)
-* **Backend:** Python 3.10+
-* **UI Framework:** Streamlit
-* **Database:** SQLite (for historical persistence)
-* **Data Science:** Pandas, Plotly (for analytics)
-* **Security:** UUID Session Management & Streamlit Secrets
-
----
-
-## 🛡️ **Data Governance & Privacy**
-As a project handling PII (Personally Identifiable Information), B.A.B.Y. implements:
-1.  **Session Isolation:** Every visitor is assigned a unique UUID. PDFs and analysis results are stored in temporary, isolated directories.
-2.  **Admin Access Layer:** Historical data is protected via an authentication layer, preventing unauthorized access to candidate history.
-3.  **Sanitized Extraction:** The engine is built to focus on skills and tools, reducing bias by ignoring non-relevant personal identifiers.
-
----
 
