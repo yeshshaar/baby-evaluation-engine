@@ -23,7 +23,7 @@ with col1:
     
     # Capture the uploaded files and JD text into variables
     uploaded_files = st.file_uploader("Upload Candidate Resumes (PDF)", accept_multiple_files=True, type=['pdf'])
-    jd_text = st.text_area("Paste Job Description Skills Here (comma separated):", height=150, placeholder="e.g., Python, Machine Learning, AWS, FastAPI...")
+    jd_text = st.text_area("Paste Full Job Description Here:", height=200, placeholder="Paste the entire messy job posting here. Yield.ai will automatically extract the core requirements...")
     
     # When the user clicks the button, this block runs
     if st.button("🚀 Run AI Evaluation", type="primary"):
@@ -57,7 +57,8 @@ with col1:
                 jd_skills_list = [skill.strip() for skill in jd_text.split(",")]
                 
                 # Step E: Run your ML Pipeline!
-                process_resumes_to_csv(raw_dir, output_csv, jd_skills_list)
+                # Step D: Run your ML Pipeline with the raw JD text!
+                process_resumes_to_csv(raw_dir, output_csv, jd_text)
                 
                 # Step F: Check if it ACTUALLY worked
                 if os.path.exists(output_csv):

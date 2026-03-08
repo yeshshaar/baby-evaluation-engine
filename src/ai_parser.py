@@ -61,3 +61,38 @@ if __name__ == "__main__":
             print(json.dumps(structured_data, indent=4))
     else:
         print("Please put test_resume.pdf in data/raw/")
+
+def parse_jd_with_llama(jd_text):
+    """Uses Llama 3.1 to extract a clean list of skills from a messy Job Description paragraph."""
+    print("Extracting core skills from Job Description using AI...")
+    
+    # Initialize the Groq client
+    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    
+    prompt = f"""
+    You are an expert technical recruiter. Extract the core technical skills, soft skills, tools, and platforms from the following Job Description.
+    Return ONLY a valid JSON object with a single key "skills" containing a list of strings.
+    Example: {{"skills": ["Python", "Machine Learning", "AWS", "Communication"]}}
+    
+    Job Description:
+    {jd_text}
+    """
+    
+    try:
+        response = client.chat.completions.create(
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            model="llama-3.1-8b-instant",
+            temperature=0.1, # Low temperature so it doesn't hallucinate skills
+            response_format={"type": "json_object"}
+        )
+        
+        # Convert the AI's text response into a Python dictionary
+        result = json.loads(response.choices[0].message.content)
+        return result.get("skills", [])
+        
+    except Exception as e:
+        print(f"JD AI Extraction Failed: {e}")
+        # Fallback engineering: If the AI fails, just split it by commas like we used to!
+        return [skill.strip() for skill in jd_text.split(",") if skill.strip()]

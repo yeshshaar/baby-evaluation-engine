@@ -1,18 +1,25 @@
 import os
 import pandas as pd
 import json
+from src.ai_parser import parse_resume_with_llama, parse_jd_with_llama
 
-# Importing the modules you built!
-# Importing the modules you built! (Updated for absolute routing)
+# Importing the modules you built! (Absolute routing for Streamlit)
 from src.extractor import extract_text_from_pdf
 from src.ai_parser import parse_resume_with_llama
 from src.scorer import calculate_skill_match
 
-def process_resumes_to_csv(resume_folder, output_csv_path, jd_skills):
-    """Orchestrates the extraction, AI parsing, scoring, and CSV export."""
-    print("Starting B.A.B.Y. Evaluation Pipeline...\n")
+def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
+    """Orchestrates the extraction, AI parsing, scoring, XAI explanation, and CSV export."""
+    print("Starting Yield.ai Evaluation Pipeline...\n")
+
+    
+    # --- SMART JD PARSER ---
+    jd_skills = parse_jd_with_llama(jd_text_raw)
+    print(f"Target JD Skills Extracted: {jd_skills}\n")
     
     results = []
+
+    
     
     # Loop through every PDF in the raw data folder
     for filename in os.listdir(resume_folder):
@@ -30,9 +37,7 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_skills):
             if not parsed_data:
                 continue
                 
-            # 3. Calculate the match score
-            candidate_skills = parsed_data.get("core_skills", []) + parsed_data.get("tools", [])
-           # 3. Calculate the match score and get the AI explanation
+            # 3. Calculate the match score and get the AI explanation
             candidate_skills = parsed_data.get("core_skills", []) + parsed_data.get("tools", [])
             
             # Catch all 4 outputs from the updated scorer!
@@ -63,11 +68,15 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_skills):
     else:
         print("No resumes were successfully processed.")
 
-# --- Running the Full Engine ---
+# --- Running the Full Engine (For Local Terminal Testing) ---
 if __name__ == "__main__":
     # Define our folders
     input_folder = "data/raw/"
     output_file = "data/processed/evaluation_report.csv"
+    
+    # Ensure directories exist for local testing
+    os.makedirs(input_folder, exist_ok=True)
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     # The target Job Description skills
     target_jd = ["Python", "Machine Learning", "NLP", "AWS", "Docker", "FastAPI"]
