@@ -1,15 +1,25 @@
 import sys
 import os
+import pandas as pd
+import streamlit as st
 
-# This tells the Streamlit Cloud server to look in the main folder for your modules
+# 1. PATH INJECTION (Crucial for Cloud)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# NOW your existing imports will work perfectly
-import streamlit as st
+# 2. GLOBAL PATH DEFINITIONS
+# This fixes the NameError: output_csv is not defined
+raw_dir = "data/raw"
+processed_dir = "data/processed"
+output_csv = os.path.join(processed_dir, "evaluation_report.csv")
+
+# Ensure folders exist on the server
+os.makedirs(raw_dir, exist_ok=True)
+os.makedirs(processed_dir, exist_ok=True)
+
+# 3. NOW PROCEED WITH OTHER IMPORTS
 from src.main import process_resumes_to_csv
 from src.database import init_db, get_all_evaluations
 from src.visualizer import create_radar_chart
-
 
 init_db()
 # --- 1. SETTINGS & PATHS ---
@@ -132,7 +142,8 @@ with tab1:
         st.info("No evaluations found. Upload a resume and click 'Run' to populate this leaderboard.")
 
 with tab2:
-    st.subheader("Bridge the Skill Gap")
+    st.header("Bridge the Skill Gap")
+    # Use the globally defined output_csv
     if os.path.exists(output_csv):
         df = pd.read_csv(output_csv)
         
