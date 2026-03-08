@@ -1,0 +1,17 @@
+# 1. Python Virtual Environment & Cache
+baby_env/
+__pycache__/
+*.pyc
+
+# 2. Data & Resumes (Privacy is key!)
+data/raw/
+data/processed/
+*.csv
+*.pdf
+*.docx
+
+# 3. Environment Variables (For our future API keys)
+.env
+
+# 4. Mac System Files
+.DS_Store
