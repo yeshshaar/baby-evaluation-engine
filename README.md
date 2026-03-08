@@ -19,6 +19,27 @@
 ## 🏗️ **System Architecture**
 The system is designed with a decoupled architecture, separating the core AI logic from the UI layer to allow for future scalability.
 
+## 🛠️ **Installation & Setup**
+
+1. **Clone the repository:**
+   
+   git clone [https://github.com/your-username/baby-evaluation-engine.git](https://github.com/yeshshaar/baby-evaluation-engine.git)
+   cd baby-evaluation-engine
+
+2. **Install dependencies:**
+
+    pip install -r requirements.txt
+
+3. **Configure Secrets:**
+
+    Create a .streamlit/secrets.toml file and add:
+
+    GROQ_API_KEY = "your_key_here"
+    ADMIN_PASSWORD = "your_password_here"
+
+4. **Run the Dashboard:**
+    streamlit run app/dashboard.py
+
 
 
 ### **Tech Stack**
