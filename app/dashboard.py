@@ -40,7 +40,7 @@ with col1:
                 
                 # Step A: Clean out the old resumes from data/raw/
                 for file in os.listdir(raw_dir):
-                    if file.endswith(".pdf"):
+                    if file.lower().endswith(".pdf"):
                         os.remove(os.path.join(raw_dir, file))
                         
                 # Step B: Clean out the old CSV so we don't read old data

@@ -23,13 +23,14 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
     
     # Loop through every PDF in the raw data folder
     for filename in os.listdir(resume_folder):
-        if filename.endswith(".pdf"):
+        if filename.lower().endswith(".pdf"):
             pdf_path = os.path.join(resume_folder, filename)
             print(f"Processing: {filename}")
             
             # 1. Extract raw text
             raw_text = extract_text_from_pdf(pdf_path)
             if not raw_text:
+                print(f"🚨 CRITICAL WARNING: PyMuPDF could not read text from {filename}!")
                 continue
                 
             # 2. Use AI to structure the data
