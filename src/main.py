@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import json
-from groq import Groq # Ensure this is imported
+from groq import Groq 
 
 from src.extractor import extract_text_from_pdf
 from src.ai_parser import parse_resume_with_llama, parse_jd_with_llama
@@ -24,23 +24,30 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
         return
 
     # Check the folder
-    if not os.path.exists(resume_folder):
-        print(f"🚨 LOG ERROR: {resume_folder} does not exist!")
+    abs_resume_path = os.path.abspath(resume_folder)
+    print(f"✅ LOG: Checking absolute path: {abs_resume_path}")
+    
+    if not os.path.exists(abs_resume_path):
+        print(f"🚨 LOG ERROR: {abs_resume_path} does not exist!")
         return
         
-    files = [f for f in os.listdir(resume_folder) if f.lower().endswith(".pdf")]
+    files = [f for f in os.listdir(abs_resume_path) if f.lower().endswith(".pdf")]
     print(f"✅ LOG: Found {len(files)} files: {files}")
+
+    if not files:
+        print("🚨 LOG ERROR: No PDF files found in the directory. Check dashboard saving logic.")
+        return
 
     try:
         jd_skills = parse_jd_with_llama(jd_text_raw)
         print(f"✅ LOG: JD Extracted: {jd_skills}")
     except Exception as e:
         print(f"🚨 LOG ERROR: JD AI Failed! Error: {e}")
-        return # Stop here if JD fails
+        return 
 
     results = []
     for filename in files:
-        pdf_path = os.path.join(resume_folder, filename)
+        pdf_path = os.path.join(abs_resume_path, filename)
         print(f"Processing: {filename}")
         
         try:
@@ -62,6 +69,7 @@ def process_resumes_to_csv(resume_folder, output_csv_path, jd_text_raw):
                 "Tools": ", ".join(parsed_data.get("tools", [])),
                 "Projects": ", ".join(parsed_data.get("projects", []))
             })
+            print(f"✅ Successfully processed {filename}")
         except Exception as e:
             print(f"🚨 LOG ERROR: Failed on {filename}: {e}")
 
