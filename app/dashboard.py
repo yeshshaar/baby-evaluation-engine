@@ -26,7 +26,7 @@ os.makedirs(processed_dir, exist_ok=True)
 output_csv = os.path.join(processed_dir, "evaluation_report.csv")
 
 # --- 4. BACKEND IMPORTS ---
-from src.main import process_resumes_to_csv, evaluate_with_llama, process_evaluation
+from src.main import process_resumes_to_csv
 from src.database import init_db, get_all_evaluations
 from src.visualizer import create_radar_chart
 from src.optimizer import generate_optimized_bullets
