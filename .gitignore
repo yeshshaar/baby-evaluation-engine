@@ -18,3 +18,4 @@ data/processed/
 
 .streamlit/.streamlit/secrets.toml
 data/sessions/
+.streamlit/secrets.toml

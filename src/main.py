@@ -9,6 +9,63 @@ from src.ai_parser import parse_resume_with_llama, parse_jd_with_llama
 from src.scorer import calculate_skill_match
 from src.sanitizer import clean_pii
 
+def evaluate_with_llama(resume_text, jd_text):
+    """Sends the prompt to Groq and forces a JSON response."""
+    system_prompt = """
+    You are an expert Technical Recruiter evaluating a resume against a Job Description.
+    You must analyze the candidate and return strictly a JSON object. Do not include any markdown formatting or extra text outside the JSON.
+    
+    Format:
+    {
+      "skill_match_score": 70, 
+      "semantic_match_score": 85,
+      "experience_relevance_score": 78,
+      "matched_skills": ["Skill1", "Skill2"],
+      "missing_skills": ["Skill3", "Skill4"]
+    }
+    """
+    user_prompt = f"Job Description:\n{jd_text}\n\nCandidate Resume:\n{resume_text}"
+
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            response_format={"type": "json_object"}, 
+            temperature=0.2 
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"API Error: {e}")
+        return None
+
+def process_evaluation(llm_json_response):
+    """Parses the JSON and calculates the Yield-AI weighted score."""
+    try:
+        data = json.loads(llm_json_response)
+    except Exception:
+        return None 
+        
+    s_skill = data.get("skill_match_score", 0)
+    s_semantic = data.get("semantic_match_score", 0)
+    s_exp = data.get("experience_relevance_score", 0)
+    
+    # Apply the 40/35/25 weights
+    overall_score = round((s_skill * 0.40) + (s_semantic * 0.35) + (s_exp * 0.25), 1)
+    
+    return {
+        "overall_score": overall_score,
+        "breakdown": {
+            "Skill Match": s_skill,
+            "Semantic Match": s_semantic,
+            "Experience Relevance": s_exp
+        },
+        "matched_skills": data.get("matched_skills", []),
+        "missing_skills": data.get("missing_skills", [])
+    }
+
 def check_api():
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
