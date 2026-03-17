@@ -124,3 +124,5 @@ def get_full_jd(jd_id: str) -> str:
     except Exception as e:
         print(f"⚠️ JD reconstruction failed: {e}")
         return ""
+
+        
