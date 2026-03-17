@@ -21,7 +21,7 @@ def parse_resume_with_llama(resume_text):
     - core_skills (list of strings)
     - tools (list of strings)
     - projects (list of strings)
-    
+
     Resume Text: {resume_text}
     """
 
@@ -47,10 +47,10 @@ def parse_jd_with_llama(jd_text):
 
     # Missing prompt defined here
     prompt = f"""
-    Extract the core skills from this Job Description. 
+    Extract the core skills from this Job Description.
     Group interchangeable skills (like 'AWS or Azure') into one string.
     Return a JSON object with a 'skills' key containing a list of strings.
-    
+
     JD: {jd_text}
     """
 

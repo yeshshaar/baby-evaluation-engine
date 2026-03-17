@@ -4,7 +4,7 @@ def create_radar_chart(candidate_name, skill_match, semantic_match, experience_r
     """
     Renders a 3-axis radar chart using the Yield-AI score breakdown.
     Each axis maps to one of the three weighted scoring dimensions.
-    
+
     Args:
         candidate_name (str): Name shown in the chart title.
         skill_match (float): Direct keyword overlap score (0–100).

@@ -2,7 +2,7 @@ import re
 
 def clean_pii(raw_text):
     """
-    Scrubs Personally Identifiable Information (PII) from resume text 
+    Scrubs Personally Identifiable Information (PII) from resume text
     to ensure unbiased AI evaluation.
     """
     print("Scrubbing PII for ethical AI evaluation...")
