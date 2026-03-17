@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - CHROMA_DB_DIR=/app/chroma_data
+      - VECTOR_DB=${VECTOR_DB:-chroma}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-yield-ai}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - API_BASE_URL=http://api:8000
+      - CHROMA_DB_DIR=/app/chroma_data
+      - VECTOR_DB=${VECTOR_DB:-chroma}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-yield-ai}
+    env_file:
+      - .env
+    restart: unless-stopped

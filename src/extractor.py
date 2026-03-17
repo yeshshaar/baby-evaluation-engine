@@ -14,7 +14,7 @@ def extract_text_from_pdf(filepath):
                     text += extracted + "\n"
     except Exception as e:
         print(f"🚨 Error reading PDF {filepath}: {e}")
-    
+
     return text.strip()
 
 def extract_text_from_docx(filepath):
@@ -34,9 +34,9 @@ def extract_text_from_file(filepath):
     if not filepath or not os.path.exists(filepath):
         print(f"🚨 Error: File not found at {filepath}")
         return ""
-        
+
     ext = os.path.splitext(filepath)[1].lower()
-    
+
     if ext == '.pdf':
         return extract_text_from_pdf(filepath)
     elif ext == '.docx':
