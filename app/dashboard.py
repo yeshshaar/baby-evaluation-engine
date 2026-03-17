@@ -295,7 +295,7 @@ def render_leaderboard(df):
 st.sidebar.title("🛠️ System Status")
 
 # ✅ NEW: Multi-model selector
-from src.chains import AVAILABLE_MODELS, DEFAULT_MODEL
+from src.chains import AVAILABLE_MODELS
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🧠 Model Selection")
 selected_model_label = st.sidebar.selectbox(

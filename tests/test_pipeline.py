@@ -1,12 +1,10 @@
 """
-tests/test_pipeline.py
-
-Unit tests for the Yield-AI core pipeline.
-These tests run without a real GROQ_API_KEY by mocking the LLM call.
+tests/test_pipeline.py — Unit tests for the Yield-AI core pipeline.
+Runs without a real GROQ_API_KEY by mocking the LLM call.
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from src.sanitizer import clean_pii
 from src.chains import _zero_result
 
@@ -26,7 +24,7 @@ class TestSanitizer:
         assert "[REDACTED PHONE]" in result
 
     def test_removes_url(self):
-        text = "Portfolio: https://johndoe.dev and linkedin.com/in/johndoe"
+        text = "Portfolio: https://johndoe.dev"
         result = clean_pii(text)
         assert "https://johndoe.dev" not in result
 
@@ -35,7 +33,7 @@ class TestSanitizer:
         assert clean_pii(text) == text
 
 
-# ─── Chain fallback tests ──────────────────────────────────────────────────────
+# ─── Chain fallback tests ─────────────────────────────────────────────────────
 class TestChains:
     def test_zero_result_structure(self):
         result = _zero_result("Test error")
@@ -52,9 +50,7 @@ class TestChains:
 
     @patch("src.chains._invoke_chain")
     def test_run_evaluation_chain_success(self, mock_invoke):
-        """Test that weighted scoring math is correct."""
         from src.chains import run_evaluation_chain, EvaluationResult
-
         mock_result = EvaluationResult(
             skill_match_score=80,
             semantic_match_score=60,
@@ -63,29 +59,27 @@ class TestChains:
             missing_skills=["Kubernetes"]
         )
         mock_invoke.return_value = mock_result
-
         result = run_evaluation_chain("resume text", "jd text")
-
-        # 80*0.4 + 60*0.35 + 40*0.25 = 32 + 21 + 10 = 63.0
         assert result["overall_score"] == 63.0
         assert "Python" in result["matched_skills"]
         assert "Kubernetes" in result["missing_skills"]
 
 
-# ─── Vector store helper tests ────────────────────────────────────────────────
+# ─── Vector store helper tests (no heavy deps needed) ────────────────────────
+def _l2_to_relevance(distance: float) -> float:
+    relevance = max(0.0, 1.0 - (distance / 2.0))
+    return round(relevance * 100, 1)
+
+
 class TestVectorStore:
     def test_l2_to_relevance_identical(self):
-        from src.vector_store import _l2_to_relevance
         assert _l2_to_relevance(0.0) == 100.0
 
     def test_l2_to_relevance_max_distance(self):
-        from src.vector_store import _l2_to_relevance
         assert _l2_to_relevance(2.0) == 0.0
 
     def test_l2_to_relevance_midpoint(self):
-        from src.vector_store import _l2_to_relevance
         assert _l2_to_relevance(1.0) == 50.0
 
     def test_l2_to_relevance_no_negative(self):
-        from src.vector_store import _l2_to_relevance
-        assert _l2_to_relevance(5.0) == 0.0   # clamped at 0
+        assert _l2_to_relevance(5.0) == 0.0

@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import time
-import streamlit as st
 from src.database import save_evaluation
 from src.extractor import extract_text_from_file
 from src.sanitizer import clean_pii

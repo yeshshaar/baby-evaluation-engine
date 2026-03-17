@@ -125,4 +125,3 @@ def get_full_jd(jd_id: str) -> str:
         print(f"⚠️ JD reconstruction failed: {e}")
         return ""
 
-        
