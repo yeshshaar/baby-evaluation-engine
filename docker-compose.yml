@@ -1,0 +1,26 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app  # 👈 This mounts your current folder to /app inside the container
+    env_file:
+      - .env
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app  # 👈 This does the same for the UI
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8000/evaluate
+    env_file:
+      - .env

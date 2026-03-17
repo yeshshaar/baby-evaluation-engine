@@ -4,8 +4,10 @@ import pandas as pd
 import streamlit as st
 import time
 import uuid
+import requests 
 
-# --- 1. PAGE CONFIG (MUST BE FIRST) ---
+
+# --- 1. PAGE CONFIG 
 st.set_page_config(page_title="Yield.ai | MLE Evaluation Engine", layout="wide")
 
 # --- 2. GLOBAL "NEON SAAS" CSS INJECTION ---
@@ -267,7 +269,8 @@ if st.button("🚀 Run AI Evaluation", type="primary", use_container_width=True)
         st.rerun()
 
 # --- 8. TABS ---
-tab1, tab2 = st.tabs(["🏆 Leaderboard", "✨ AI Resume Optimizer"])
+# 👉 We added a third tab here!
+tab1, tab2, tab3 = st.tabs(["🏆 Leaderboard", "✨ AI Resume Optimizer", "🧠 Semantic Search"])
 
 with tab1:
     st.header("Session Analysis")
@@ -297,17 +300,13 @@ with tab1:
         render_scorecard(candidate_row["Candidate Name"], candidate_row)
         
         st.markdown("---")
-        
         st.subheader("📊 Skill Gap Visualization")
         chart = create_radar_chart(
             candidate_row["Candidate Name"], 
             candidate_row["Matched Skills"], 
             candidate_row["Missing Skills"]
         )
-        st.plotly_chart(chart, use_container_width=True)
-        
-        with st.expander("View Raw Data"):
-            st.dataframe(display_df, use_container_width=True, hide_index=True)
+        st.plotly_chart(chart, width="stretch")
     else:
         st.info("No evaluations to display yet.")
 
@@ -327,3 +326,41 @@ with tab2:
                     st.success(f"**Suggestion {i+1}:** {tip}")
     else:
         st.info("Run an evaluation first to see optimization tips.")
+
+# 👉 THE NEW VECTOR SEARCH UI
+with tab3:
+    st.header("Talent Intelligence Search")
+    st.markdown("Query your Vector Database using natural language to find the perfect candidate match.")
+    
+    search_query = st.text_input("🔍 What are you looking for?", placeholder="e.g., 'A senior backend engineer with deep Python and Docker experience'")
+    
+    if st.button("Search Database", type="primary"):
+        if search_query:
+            with st.spinner("Searching Vector Space..."):
+                response = None
+                try:
+                    # 1. Try the internal Docker network first
+                    primary_url = os.environ.get("API_URL", "http://api:8000/evaluate").replace("/evaluate", "/search")
+                    response = requests.post(primary_url, json={"query": search_query, "top_k": 3}, timeout=10)
+                except requests.exceptions.ConnectionError:
+                    try:
+                        # 2. Fallback: Try the local Mac network if Docker DNS fails
+                        fallback_url = "http://127.0.0.1:8000/search"
+                        response = requests.post(fallback_url, json={"query": search_query, "top_k": 3}, timeout=10)
+                    except Exception as e:
+                        st.error(f"Could not connect to API on any network: {e}")
+                
+                if response and response.status_code == 200:
+                    results = response.json().get("results", [])
+                    if results:
+                        for idx, res in enumerate(results):
+                            st.markdown(f"### {idx + 1}. {res['name']}")
+                            st.write(f"**Yield-AI Score:** {res['score']}%")
+                            st.caption(f"Vector Match Distance: {res['match_distance']}") 
+                            st.markdown("---")
+                    else:
+                        st.warning("No matching candidates found in the database. (Try running an evaluation first!)")
+                elif response:
+                    st.error(f"API Error: {response.status_code} - {response.text}")
+        else:
+            st.warning("Please enter a search query.")
