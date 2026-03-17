@@ -1,15 +1,42 @@
+# ─── Core UI & API ────────────────────────────────────────────────────────────
 streamlit
-pandas
-plotly
-requests
-PyPDF2
-python-docx
 fastapi
 uvicorn
-pydantic
-langchain
+
+# ─── LLM & LangChain ─────────────────────────────────────────────────────────
+groq
 langchain-groq
-chromadb
+langchain-core
+langchain-community
 langchain-chroma
 langchain-huggingface
+langchain-pinecone        # only needed if VECTOR_DB=pinecone
+langchain-text-splitters
+
+# ─── Vector DBs ───────────────────────────────────────────────────────────────
 sentence-transformers
+chromadb
+pinecone-client           # only needed if VECTOR_DB=pinecone
+qdrant-client             # only needed if VECTOR_DB=qdrant
+
+# ─── Evaluation ───────────────────────────────────────────────────────────────
+ragas
+datasets
+
+# ─── Data & Files ─────────────────────────────────────────────────────────────
+pandas
+PyMuPDF
+python-docx
+PyPDF2
+
+# ─── Reliability & Observability ─────────────────────────────────────────────
+tenacity
+langsmith
+python-dotenv
+pydantic
+
+# ─── Visualisation ────────────────────────────────────────────────────────────
+plotly
+
+# ─── CI/CD (dev only) ────────────────────────────────────────────────────────
+# ruff, mypy, pytest, pytest-cov  ← installed separately in GitHub Actions

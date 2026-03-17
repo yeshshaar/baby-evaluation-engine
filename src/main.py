@@ -1,11 +1,24 @@
 import os
 import pandas as pd
-import requests
 import time
-import streamlit as st  # 👉 Added this to show errors on the UI!
+import streamlit as st
+from src.database import save_evaluation
 from src.extractor import extract_text_from_file
+from src.sanitizer import clean_pii
+from src.chains import run_evaluation_chain, DEFAULT_MODEL
 
-def process_resumes_to_csv(raw_dir, output_csv, jd_text, progress_callback=None):
+
+def process_resumes_to_csv(
+    raw_dir: str,
+    output_csv: str,
+    jd_text: str,
+    progress_callback=None,
+    model_name: str = DEFAULT_MODEL   # ✅ model is now selectable per-run
+):
+    """
+    Reads PDFs/DOCXs, sanitizes PII, evaluates using the selected model,
+    saves results to CSV and persists to SQLite.
+    """
     results = []
     files = [f for f in os.listdir(raw_dir) if f.lower().endswith(('.pdf', '.docx'))]
     total_files = len(files)
@@ -13,62 +26,51 @@ def process_resumes_to_csv(raw_dir, output_csv, jd_text, progress_callback=None)
     for i, filename in enumerate(files):
         filepath = os.path.join(raw_dir, filename)
         candidate_name = filename.replace(".pdf", "").replace(".docx", "").replace("_", " ")
-        
-        resume_text = extract_text_from_file(filepath)
-        
-        parsed_data = None
+
+        # 1. Extract text
         try:
-            # 👉 Bulletproof Network Fallbacks
-            primary_url = os.environ.get("API_URL", "http://api:8000/evaluate")
-            payload = {
-                "candidate_name": candidate_name, 
-                "resume_text": resume_text, 
-                "jd_text": jd_text
-            }
-            
-            try:
-                # Attempt 1: Internal Docker Network
-                response = requests.post(primary_url, json=payload, timeout=60)
-            except requests.exceptions.ConnectionError:
-                # Attempt 2: Mac Host Routing (Bypasses Docker DNS issues)
-                fallback_url = "http://host.docker.internal:8000/evaluate"
-                response = requests.post(fallback_url, json=payload, timeout=60)
-
-            # 👉 THE NOISY ERROR REPORTER
-            if response.status_code == 200:
-                parsed_data = response.json()
-            else:
-                st.error(f"🚨 API SERVER ERROR {response.status_code} on {filename}: {response.text}")
-                
+            resume_text = extract_text_from_file(filepath)
         except Exception as e:
-            st.error(f"🚨 FATAL NETWORK ERROR: Could not reach the API at all. Details: {e}")
+            print(f"Extraction Error on {filename}: {e}")
+            resume_text = ""
 
-        # Fallback to 0 if we hit the errors above
-        if not parsed_data:
-            parsed_data = {
-                "overall_score": 0,
-                "breakdown": {"Skill Match": 0, "Semantic Match": 0, "Experience Relevance": 0},
-                "matched_skills": [],
-                "missing_skills": []
-            }
+        # 2. Sanitize PII before any LLM call
+        resume_text = clean_pii(resume_text)
 
-        results.append({
-            "Candidate Name": candidate_name,
-            "Score": parsed_data["overall_score"],
-            "Skill Match": parsed_data["breakdown"]["Skill Match"],
-            "Semantic Match": parsed_data["breakdown"]["Semantic Match"],
+        # 3. Evaluate via LangChain chain (single source of truth)
+        parsed_data = run_evaluation_chain(
+            resume_text=resume_text,
+            jd_text=jd_text,
+            model_name=model_name
+        )
+
+        # 4. Map to UI columns
+        row = {
+            "Candidate Name":       candidate_name,
+            "Score":                parsed_data["overall_score"],
+            "Skill Match":          parsed_data["breakdown"]["Skill Match"],
+            "Semantic Match":       parsed_data["breakdown"]["Semantic Match"],
             "Experience Relevance": parsed_data["breakdown"]["Experience Relevance"],
-            "Matched Skills": ", ".join(parsed_data.get("matched_skills", [])),
-            "Missing Skills": ", ".join(parsed_data.get("missing_skills", []))
-        })
+            "Matched Skills":       ", ".join(parsed_data["matched_skills"]),
+            "Missing Skills":       ", ".join(parsed_data["missing_skills"]),
+            "Model Used":           parsed_data.get("model_used", model_name),
+        }
+        results.append(row)
+
+        # 5. Rate limit buffer
+        time.sleep(2)
 
         if progress_callback:
             progress_callback(i, total_files, filename)
-        time.sleep(1)
 
+    # 6. Save to CSV
     df = pd.DataFrame(results)
     if not df.empty:
         df = df.sort_values(by="Score", ascending=False)
     df.to_csv(output_csv, index=False)
-    
+
+    # 7. Persist to SQLite
+    if results:
+        save_evaluation(results)
+
     return df

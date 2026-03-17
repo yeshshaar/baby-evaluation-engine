@@ -1,61 +1,79 @@
 import plotly.graph_objects as go
 
-def create_radar_chart(candidate_name, matched_skills, missing_skills):
-    # 1. Safely handle Pandas NaNs (floats)
-    if isinstance(matched_skills, float):
-        matched_skills = ""
-    if isinstance(missing_skills, float):
-        missing_skills = ""
-        
-    # 2. Force to string
-    matched_str = str(matched_skills)
-    missing_str = str(missing_skills)
+def create_radar_chart(candidate_name, skill_match, semantic_match, experience_relevance):
+    """
+    Renders a 3-axis radar chart using the Yield-AI score breakdown.
+    Each axis maps to one of the three weighted scoring dimensions.
     
-    # 3. Clean split
-    matched_list = matched_str.split(", ") if matched_str.lower() not in ["nan", "none", ""] else []
-    missing_list = missing_str.split(", ") if missing_str.lower() not in ["nan", "none", ""] else []
-    
-    categories = ['Matched Skills', 'Missing Skills']
-    r_values = [len(matched_list), len(missing_list)]
-    
+    Args:
+        candidate_name (str): Name shown in the chart title.
+        skill_match (float): Direct keyword overlap score (0–100).
+        semantic_match (float): LLM contextual alignment score (0–100).
+        experience_relevance (float): Career seniority/tool depth score (0–100).
+    """
+    categories = ['Skill Match', 'Semantic Match', 'Experience Relevance']
+    values = [
+        float(skill_match or 0),
+        float(semantic_match or 0),
+        float(experience_relevance or 0)
+    ]
+    # Close the polygon by repeating the first value
+    values_closed = values + [values[0]]
+    categories_closed = categories + [categories[0]]
+
     fig = go.Figure()
 
-    # --- THE TRACE (The Neon Polygon) ---
+    # --- Filled neon polygon ---
     fig.add_trace(go.Scatterpolar(
-          r=r_values,
-          theta=categories,
-          fill='toself',
-          fillcolor='rgba(0, 255, 204, 0.2)', # Glassmorphism neon cyan fill
-          line=dict(color='#00ffcc', width=3), # Solid neon cyan border
-          marker=dict(color='#00ffcc', size=8), # Glowing dots at the edges
-          name=candidate_name
+        r=values_closed,
+        theta=categories_closed,
+        fill='toself',
+        fillcolor='rgba(0, 255, 204, 0.15)',
+        line=dict(color='#00ffcc', width=3),
+        marker=dict(color='#00ffcc', size=10, symbol='circle',
+                    line=dict(color='#ffffff', width=1)),
+        name=candidate_name,
+        hovertemplate='<b>%{theta}</b><br>Score: %{r}%<extra></extra>'
     ))
 
-    # --- THE LAYOUT (The Dark Theme Overrides) ---
+    # --- Reference ring at 50% (benchmark line) ---
+    fig.add_trace(go.Scatterpolar(
+        r=[50, 50, 50, 50],
+        theta=categories_closed,
+        mode='lines',
+        line=dict(color='rgba(138, 43, 226, 0.5)', width=1, dash='dot'),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
     fig.update_layout(
-      polar=dict(
-        bgcolor='rgba(10, 12, 30, 0.4)', # Deep space-navy background inside the radar
-        radialaxis=dict(
-          visible=True,
-          range=[0, max(max(r_values) + 1, 5)], # Forces a minimum scale so it doesn't look distorted
-          gridcolor='rgba(138, 43, 226, 0.3)', # Deep Purple web lines
-          linecolor='rgba(138, 43, 226, 0.5)', 
-          tickfont=dict(color='#8a8d9e') # Subtle grey numbers
+        polar=dict(
+            bgcolor='rgba(10, 12, 30, 0.4)',
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                gridcolor='rgba(138, 43, 226, 0.3)',
+                linecolor='rgba(138, 43, 226, 0.5)',
+                tickfont=dict(color='#8a8d9e', size=10),
+                ticksuffix='%',
+                dtick=25,
+            ),
+            angularaxis=dict(
+                gridcolor='rgba(138, 43, 226, 0.3)',
+                linecolor='rgba(138, 43, 226, 0.5)',
+                tickfont=dict(color='#00ffcc', size=14, weight='bold')
+            )
         ),
-        angularaxis=dict(
-          gridcolor='rgba(138, 43, 226, 0.3)', # Deep Purple outer ring
-          linecolor='rgba(138, 43, 226, 0.5)',
-          tickfont=dict(color='#00ffcc', size=14, weight="bold") # Cyan labels
-        )
-      ),
-      paper_bgcolor='rgba(0,0,0,0)', # Makes the outer square totally invisible!
-      plot_bgcolor='rgba(0,0,0,0)',
-      showlegend=False,
-      title=dict(
-          text=f"📊 Skill Coverage Analysis: {candidate_name}",
-          font=dict(color='#ffffff', size=20)
-      ),
-      margin=dict(t=60, b=40, l=40, r=40)
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False,
+        title=dict(
+            text=f"📊 Score Breakdown: {candidate_name}",
+            font=dict(color='#ffffff', size=18),
+            x=0.5
+        ),
+        margin=dict(t=80, b=40, l=60, r=60),
+        height=420
     )
-    
+
     return fig
